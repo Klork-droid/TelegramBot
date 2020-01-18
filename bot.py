@@ -18,7 +18,7 @@ def command_handler(message: Message):
 def echo_i_see(message: Message):
     reply = str("I see you")
     if message.from_user.id in USERS:
-        reply += f"Hello again, {message.from_user.username}"
+        reply = f"Hello again, {message.from_user.username}. " + reply
     bot.reply_to(message, reply)
     USERS.add(message.from_user.id)
 
