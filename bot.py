@@ -1,9 +1,10 @@
 import telebot
 from telebot.types import Message
+from telebot import types
 import requests
 
 token = "1010570699:AAG8w1NHWTuEpgA0JZrRD_nO015pym37iXk"
-
+appid = 'aa6bc48979bd3a747446e5727350ecd0'  # API for home.openweathermap.org
 bot = telebot.TeleBot(token)
 
 USERS = set()
@@ -18,6 +19,19 @@ def command_handler(message: Message):
     /ETC 
     /Weather"""
     bot.send_message(message.chat.id, reply)
+
+
+@bot.message_handler(commands=["geo"])
+def geo(message):
+    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
+    button_geo = types.KeyboardButton(text="Отправить местоположение", request_location=True)
+    keyboard.add(button_geo)
+    bot.send_message(message.chat.id, "Отправь мне свое местоположение!", reply_markup=keyboard)
+
+
+@bot.message_handler(commands=["Weather"])
+def get_weather(message: Message):
+    pass
 
 
 @bot.message_handler(commands=["BTC", "ETH", "ETC"])
