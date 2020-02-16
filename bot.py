@@ -2,18 +2,24 @@ import telebot
 from telebot.types import Message
 from telebot import types
 import requests
+from db import init_db
+from db import add_message
+from db import list_messages
+from db import last_location
 
 token = "1010570699:AAG8w1NHWTuEpgA0JZrRD_nO015pym37iXk"
 appid = 'aa6bc48979bd3a747446e5727350ecd0'  # API for home.openweathermap.org
 bot = telebot.TeleBot(token)
 
-USERS = set()
+init_db()
 
 reply_for_start = "This bot can show the price of crypto and will can show the weather of your town.\n" \
                   "You can use these commands:"
 reply_for_crypto = "This bot can show the price of crypto.\n" \
                    "Please, choose a crypto:"
 reply_for_weather = "Send me your location please!"
+
+reply_for_choice_location = "Choose your location:"
 
 
 def location_message(chat_id):
@@ -26,7 +32,7 @@ def location_message(chat_id):
 def keyboard_first():
     keyboard = types.InlineKeyboardMarkup()
     crypto_button = types.InlineKeyboardButton(text="Crypto", callback_data="crypto_button")
-    weather_button = types.InlineKeyboardButton(text="Weather", callback_data="location_button")
+    weather_button = types.InlineKeyboardButton(text="Weather", callback_data="weather_button")
     keyboard.add(crypto_button, weather_button)
     return keyboard
 
@@ -42,14 +48,18 @@ def crypto_keyboard():
     return keyboard
 
 
-def weather_keyboard():
+def location_keyboard(city_dict):
     keyboard = types.InlineKeyboardMarkup()
-
-    pass
+    for ikey in city_dict.keys():
+        keyboard.add(types.InlineKeyboardButton(text=ikey, callback_data=ikey))
+    keyboard.add(types.InlineKeyboardButton(text="Current location", callback_data="current_location"))
+    keyboard.add(types.InlineKeyboardButton(text="Back ⬅", callback_data="back_button"))
+    return keyboard
 
 
 @bot.message_handler(commands=["start"])
 def key(message: Message):
+    add_message(user_id=message.chat.id, text="/start", user_name=message.chat.username)
     bot.send_message(message.chat.id,
                      text=reply_for_start,
                      reply_markup=keyboard_first())
@@ -59,6 +69,9 @@ def key(message: Message):
 def handle_query(call):
     chat_id = call.message.chat.id
     message_id = call.message.message_id
+    city_dict = last_location(user_id=chat_id)
+    if city_dict:
+        city_dict = unique_location(city_dict)
     if call.data == "crypto_button":
         bot.edit_message_text(chat_id=chat_id,
                               text=reply_for_crypto,
@@ -74,19 +87,53 @@ def handle_query(call):
                               text=reply_for_start,
                               message_id=message_id,
                               reply_markup=keyboard_first())
-    elif call.data == "location_button":
+    elif call.data == "weather_button":
+        if city_dict:
+            bot.edit_message_text(chat_id=chat_id,
+                                  text=reply_for_choice_location,
+                                  message_id=message_id,
+                                  reply_markup=location_keyboard(city_dict))
+        else:
+            bot.delete_message(chat_id, message_id)
+            location_message(chat_id)
+    elif call.data == "current_location":
         bot.delete_message(chat_id, message_id)
         location_message(chat_id)
+    elif call.data in city_dict.keys():
+        ilist = city_dict.get(call.data)
+        bot.delete_message(chat_id, message_id)
+        reply = get_weather(ilist[0], ilist[1])
+        bot.send_message(chat_id, text=reply)
 
 
 @bot.message_handler(content_types=["location"])
 def get_location(message: Message):
     latitude = message.location.latitude
     longitude = message.location.longitude
-    get_weather(latitude, longitude, message.chat.id)
+    add_message(user_id=message.chat.id, user_name=message.chat.username,
+                text="/location", latitude=latitude, longitude=longitude)
+    reply = get_weather(lat=latitude, lon=longitude)
+    bot.send_message(chat_id=message.chat.id, text=reply)
 
 
-def get_weather(lat, lon, chat_id):
+def unique_location(loc: tuple):
+    lat = loc[0][0]
+    lon = loc[0][1]
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={appid}"
+    r = requests.get(url).json()
+    unique_city_dict = {r['name']: [lat, lon]}
+    i = 1
+    while i < len(loc) - 1:
+        lat = loc[i][0]
+        lon = loc[i][1]
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={appid}"
+        r = requests.get(url).json()
+        if r['name'] not in unique_city_dict:
+            unique_city_dict[r['name']] = [lat, lon]
+    return unique_city_dict
+
+
+def get_weather(lat, lon):
     url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={appid}"
     r = requests.get(url).json()
     temp = float(r['main']['temp']) - 273
@@ -103,7 +150,7 @@ def get_weather(lat, lon, chat_id):
             f"speed: {r['wind']['speed']} m/s\n" \
             f"deg: {direct}\n" \
             f"clouds: {r['clouds']['all']}%"
-    bot.send_message(chat_id=chat_id, text=reply)
+    return reply
 
 
 def get_direction(deg):
@@ -163,10 +210,8 @@ def get_price(name):
 @bot.edited_message_handler(content_types=["text"])
 def echo_i_see(message: Message):
     reply = str("Use '/start' please")
-    if message.from_user.id in USERS:
-        reply = f"Hello again, {message.from_user.username}. " + reply
+    add_message(user_id=message.from_user.id, user_name=message.from_user.username, text=message.text)
     bot.reply_to(message, reply)
-    USERS.add(message.from_user.id)
 
 
 @bot.message_handler(content_types=['sticker'])
