@@ -4,8 +4,10 @@ from telebot import types
 import requests
 from db import init_db
 from db import add_message
-from db import list_messages
 from db import last_location
+import datetime
+import time
+from multiprocessing import Process
 
 token = "1010570699:AAG8w1NHWTuEpgA0JZrRD_nO015pym37iXk"
 appid = 'aa6bc48979bd3a747446e5727350ecd0'  # API for home.openweathermap.org
@@ -221,4 +223,37 @@ def sticker_handler(message: Message):
     bot.send_sticker(message.chat.id, message.sticker.file_id)
 
 
-bot.polling(timeout=60)
+def check_time_message():
+    while True:
+        try:
+            with open("Time_last_price_etc.txt", "r+") as file:
+                flag = file.read()
+                time_now = str(datetime.datetime.now())
+                for x in [5, 8]:  # 5 is month, 8 is day, 11 is hour
+                    if time_now[x:x + 2] > flag[x:x + 2]:
+                        bot.send_message(chat_id="345547733", text=get_price("etc"))
+                        file.seek(0)
+                        file.write(time_now)
+                        break
+                    elif int(time_now[11:13]) - int(flag[11:13]) >= 12:
+                        bot.send_message(chat_id="345547733", text=get_price("etc"))
+                        file.seek(0)
+                        file.write(time_now)
+                        break
+                    else:
+                        print(12 - (int(time_now[11:13]) - int(flag[11:13])))
+                        time.sleep(12 - (int(time_now[11:13]) - int(flag[11:13])))
+        except IOError:
+            print("An IOError has occurred!")
+            time.sleep(3 * 60 ** 2)
+
+
+p1 = Process(target=check_time_message(), args=())
+p1.start()
+
+while True:
+    try:
+        bot.polling(30)
+    except Exception as e:
+        print(e)
+        time.sleep(60)
