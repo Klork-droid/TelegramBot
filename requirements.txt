@@ -1,4 +1,4 @@
 PyTelegramBotAPI==3.6.7
 Requests==2.22.0
 django==3.0.3
-django-heroku==0.3.1
+django_heroku==0.3.1
