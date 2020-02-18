@@ -5,6 +5,7 @@ import requests
 from db import init_db
 from db import add_message
 from db import last_location
+from db import all_users
 import datetime
 import time
 
@@ -227,17 +228,21 @@ def check_time_message():
         with open("Time_last_price_etc.txt", "r+") as file:
             flag = file.read()
             time_now = str(datetime.datetime.now())
+            do_send_message = False
             for x in [5, 8]:  # 5 is month, 8 is day, 11 is hour
                 if time_now[x:x + 2] > flag[x:x + 2]:
-                    bot.send_message(chat_id="345547733", text=get_price("etc"))
+                    do_send_message = True
                     file.seek(0)
                     file.write(time_now)
                     break
                 elif int(time_now[11:13]) - int(flag[11:13]) >= 12:
-                    bot.send_message(chat_id="345547733", text=get_price("etc"))
+                    do_send_message = True
                     file.seek(0)
                     file.write(time_now)
                     break
+            if do_send_message:
+                for user_id in all_users():
+                    bot.send_message(chat_id=user_id[0], text=get_price("etc"))
     except IOError:
         print("An IOError has occurred!")
 

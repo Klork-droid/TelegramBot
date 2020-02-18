@@ -25,7 +25,7 @@ def init_db(conn, force: bool = False):
     if force:
         c.execute('DROP TABLE IF EXISTS user_message')
         c.execute('DROP TABLE IF EXISTS user_location')
-        c.execute('DROP TABLE IF EXISTS user_name')
+        c.execute('DROP TABLE IF EXISTS user_names')
 
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_message (
@@ -88,6 +88,12 @@ def last_location(conn, user_id):
     c.execute('SELECT latitude, longitude FROM user_location WHERE user_id = ? ORDER BY id DESC LIMIT 3', (user_id,))
     return c.fetchall()
 
+@ensure_connection
+def all_users(conn):
+    c = conn.cursor()
+    c.execute('SELECT user_id FROM user_names')
+    return c.fetchall()
+
 
 @ensure_connection
 def list_messages(conn, user_id: int, limit: int = 10):
@@ -99,10 +105,12 @@ def list_messages(conn, user_id: int, limit: int = 10):
 if __name__ == '__main__':
     init_db()
 
-    # add_message(user_id=1234, text='kekjj', user_name='klork3', longitude=21.12, latitude=9.12)
+    #add_message(user_id=12, text='kekjj', user_name='klork3', longitude=21.12, latitude=9.12)
 
     l = last_location(user_id=1234)
-    print(len(l))
+    print(len(all_users()))
+    for _ in all_users():
+        print(_[0])
     if not l:
         print("Данные отсутствуют")
     else:
