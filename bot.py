@@ -234,7 +234,7 @@ def sticker_handler(message: Message):
 
 def check_time_message():
     try:
-        with open("Time_last_price_etc.txt", "r+") as file:
+        with open("Time_last_price_etc.txt", "w+") as file:
             flag = file.read()
             time_now = str(datetime.now())
             do_send_message = False

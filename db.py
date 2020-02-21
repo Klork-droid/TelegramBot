@@ -103,16 +103,4 @@ def list_messages(conn, user_id: int, limit: int = 10):
 
 
 if __name__ == '__main__':
-    init_db()
-
-    #add_message(user_id=12, text='kekjj', user_name='klork3', longitude=21.12, latitude=9.12)
-
-    l = last_location(user_id=1234)
-    print(len(all_users()))
-    for _ in all_users():
-        print(_[0])
-    if not l:
-        print("Данные отсутствуют")
-    else:
-        for _ in l:
-            print(_)
+    init_db(force=True)
