@@ -73,9 +73,10 @@ def key(message: Message):
 def handle_query(call):
     chat_id = call.message.chat.id
     message_id = call.message.message_id
+    city_dict = None
     if user_id_location_dict.get(chat_id):
         city_dict = user_id_location_dict.get(chat_id)
-    else:
+    elif last_location(user_id=chat_id):
         city_dict = last_location(user_id=chat_id)
         city_dict = unique_location(city_dict)
         user_id_location_dict.update({chat_id: city_dict})
@@ -121,10 +122,16 @@ def handle_query(call):
 def get_location(message: Message):
     latitude = message.location.latitude
     longitude = message.location.longitude
-    add_message(user_id=message.chat.id, user_name=message.chat.username,
-                text="/location", latitude=latitude, longitude=longitude)
+    add_message(user_id=message.chat.id,
+                user_name=message.chat.username,
+                text="/location",
+                latitude=latitude,
+                longitude=longitude)
     reply = get_weather(lat=latitude, lon=longitude)
     bot.send_message(chat_id=message.chat.id, text=reply)
+    bot.send_message(chat_id=message.chat.id,
+                     text=reply_for_start,
+                     reply_markup=keyboard_first())
 
 
 def unique_location(loc: tuple):
@@ -234,7 +241,7 @@ def sticker_handler(message: Message):
 
 def check_time_message():
     try:
-        with open("Time_last_price_etc.txt", "w+") as file:
+        with open("Time_last_price_etc.txt", "r+") as file:
             flag = file.read()
             time_now = str(datetime.now())
             do_send_message = False
@@ -254,6 +261,7 @@ def check_time_message():
                     bot.send_message(chat_id=user_id[0], text=get_price("etc"))
     except IOError:
         print("An IOError has occurred!")
+        open("Time_last_price_etc.txt", "w+")
 
 
 check_time_message()

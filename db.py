@@ -88,6 +88,7 @@ def last_location(conn, user_id):
     c.execute('SELECT latitude, longitude FROM user_location WHERE user_id = ? ORDER BY id DESC LIMIT 3', (user_id,))
     return c.fetchall()
 
+
 @ensure_connection
 def all_users(conn):
     c = conn.cursor()
