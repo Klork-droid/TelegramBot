@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 .idea/
 key_tbot.venv/
+Time_last_price_etc.txt
+anketa.db
 
 # C extensions
 *.so
