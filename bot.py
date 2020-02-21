@@ -6,7 +6,7 @@ from db import init_db
 from db import add_message
 from db import last_location
 from db import all_users
-import datetime
+from datetime import datetime
 import time
 
 token = "1010570699:AAG8w1NHWTuEpgA0JZrRD_nO015pym37iXk"
@@ -14,6 +14,8 @@ appid = 'aa6bc48979bd3a747446e5727350ecd0'  # API for home.openweathermap.org
 bot = telebot.TeleBot(token)
 
 init_db()
+
+user_id_location_dict = {}
 
 reply_for_start = "This bot can show the price of crypto and will can show the weather of your town.\n" \
                   "You can use these commands:"
@@ -71,9 +73,12 @@ def key(message: Message):
 def handle_query(call):
     chat_id = call.message.chat.id
     message_id = call.message.message_id
-    city_dict = last_location(user_id=chat_id)
-    if city_dict:
+    if user_id_location_dict.get(chat_id):
+        city_dict = user_id_location_dict.get(chat_id)
+    else:
+        city_dict = last_location(user_id=chat_id)
         city_dict = unique_location(city_dict)
+        user_id_location_dict.update({chat_id: city_dict})
     if call.data == "crypto_button":
         bot.edit_message_text(chat_id=chat_id,
                               text=reply_for_crypto,
@@ -102,10 +107,14 @@ def handle_query(call):
         bot.delete_message(chat_id, message_id)
         location_message(chat_id)
     elif call.data in city_dict.keys():
-        ilist = city_dict.get(call.data)
-        bot.delete_message(chat_id, message_id)
-        reply = get_weather(ilist[0], ilist[1])
-        bot.send_message(chat_id, text=reply)
+        ivalues = city_dict.get(call.data)
+        reply = get_weather(ivalues[0], ivalues[1])
+        bot.edit_message_text(chat_id=chat_id,
+                              text=reply,
+                              message_id=message_id)
+        bot.send_message(chat_id=chat_id,
+                         text=reply_for_start,
+                         reply_markup=keyboard_first())
 
 
 @bot.message_handler(content_types=["location"])
@@ -227,7 +236,7 @@ def check_time_message():
     try:
         with open("Time_last_price_etc.txt", "r+") as file:
             flag = file.read()
-            time_now = str(datetime.datetime.now())
+            time_now = str(datetime.now())
             do_send_message = False
             for x in [5, 8]:  # 5 is month, 8 is day, 11 is hour
                 if time_now[x:x + 2] > flag[x:x + 2]:
