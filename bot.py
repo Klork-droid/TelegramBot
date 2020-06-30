@@ -8,6 +8,12 @@ from db import last_location
 from db import all_users
 from datetime import datetime
 import time
+from bs4 import BeautifulSoup as bs
+
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
+headers = {
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'user-agent': user_agent}
 
 token = "1010570699:AAG8w1NHWTuEpgA0JZrRD_nO015pym37iXk"
 appid = 'aa6bc48979bd3a747446e5727350ecd0'  # API for home.openweathermap.org
@@ -17,7 +23,8 @@ init_db()
 
 user_id_location_dict = {}
 
-reply_for_start = "This bot can show the price of crypto and will can show the weather of your town.\n" \
+reply_for_start = "This bot can show the price of crypto, show the weather of your town" \
+                  "and parsing photo from instagram.\n" \
                   "You can use these commands:"
 reply_for_crypto = "This bot can show the price of crypto.\n" \
                    "Please, choose a crypto:"
@@ -224,12 +231,44 @@ def get_price(name):
     return reply
 
 
+def get_image_from_url(url):
+    print('get image from ', url)
+    session = requests.session()
+    request = session.get(url=url, headers=headers)
+    if request.status_code == 200:
+        soup = bs(request.content, 'lxml')
+        try:
+            print('good')
+            soup = str(soup)
+            index = soup.find("accessibility_caption")
+            print(index)
+            soup = soup[index-1000:index]
+            end = soup.rfind('\",\"')
+            start = soup.rfind('{') + 8
+            link = soup[start:end]
+            link = link.replace('\\u0026', '&')
+            img = requests.get(link)
+        except:
+            print('except from get_image_from_url')
+    else:
+        print(request.status_code)
+        print('ERROR')
+
+    return img.content
+
+
 @bot.message_handler(content_types=["text"])
 @bot.edited_message_handler(content_types=["text"])
 def echo_i_see(message: Message):
-    reply = str("Use '/start' please")
-    add_message(user_id=message.from_user.id, user_name=message.from_user.username, text=message.text)
-    bot.reply_to(message, reply)
+    print(message.text)
+    if message.text.startswith('https://www.instagram.com/'):
+        url = message.text
+        image = get_image_from_url(url)
+        bot.send_photo(chat_id=message.chat.id, photo=image)
+    else:
+        reply = str("Use '/start' please")
+        add_message(user_id=message.from_user.id, user_name=message.from_user.username, text=message.text)
+        bot.reply_to(message, reply)
 
 
 @bot.message_handler(content_types=['sticker'])
