@@ -206,28 +206,44 @@ def get_direction(deg):
 def get_price(name):
     crypto_symbol = name[0:3]
     crypto_dict = {
-        'btc': 'bitcoin',
-        'eth': 'ethereum',
-        'etc': 'ethereum-classic'
+        'btc': 'BTC',
+        'eth': 'ETH',
+        'etc': 'ETC'
     }
     name_crypto = crypto_dict.get(crypto_symbol)
-    url = f'https://api.coinmarketcap.com/v1/ticker/{name_crypto}/'
-    r = requests.get(url).json()
-    price = float(r[-1]['price_usd'])
-    price = '{:.1f}'.format(price)
-    smail_up = '📈'
-    smail_down = '📉'
-    temp = r[-1]['percent_change_1h']
-    percent_change_1h = temp + smail_up if float(temp) > 0 else temp + smail_down
-    temp = r[-1]['percent_change_24h']
-    percent_change_24h = temp + smail_up if float(temp) > 0 else temp + smail_down
-    temp = r[-1]['percent_change_7d']
-    percent_change_7d = temp + smail_up if float(temp) > 0 else temp + smail_down
-    reply = f"""Price of {name_crypto}: {price}$
-    Change of 1h:   {percent_change_1h}
-    Change of 24h:  {percent_change_24h}
-    Change of 7d:   {percent_change_7d}
-    """
+    url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest'
+    parameters = {
+        'symbol': f'{name_crypto}'
+    }
+    headers = {
+        'Accepts': 'application/json',
+        'X-CMC_PRO_API_KEY': '6a7ebccc-a26a-41d3-85ca-7590d84214be',
+    }
+
+    session = requests.session()
+
+    try:
+        response = session.get(url, params=parameters, headers=headers)
+        data = response.json()
+        r = data['data'][f'{name_crypto}']['quote']['USD']
+        price = float(r['price'])
+        price = '{:.1f}'.format(price)
+        smail_up = '📈'
+        smail_down = '📉'
+        temp = str(r['percent_change_1h'])
+        percent_change_1h = temp + smail_up if float(temp) > 0 else temp + smail_down
+        temp = str(r['percent_change_24h'])
+        percent_change_24h = temp + smail_up if float(temp) > 0 else temp + smail_down
+        temp = str(r['percent_change_7d'])
+        percent_change_7d = temp + smail_up if float(temp) > 0 else temp + smail_down
+        reply = f"""Price of {name_crypto}: {price}$
+        Change of 1h:   {percent_change_1h}
+        Change of 24h:  {percent_change_24h}
+        Change of 7d:   {percent_change_7d}
+        """
+    except Exception as e:
+        print(e)
+
     return reply
 
 
@@ -239,7 +255,7 @@ def get_image_from_url(url):
         try:
             soup = str(soup)
             index = soup.find("accessibility_caption")
-            soup = soup[index-1000:index]
+            soup = soup[index - 1000:index]
             end = soup.rfind('\",\"')
             start = soup.rfind('{') + 8
             link = soup[start:end]
