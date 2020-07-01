@@ -232,24 +232,21 @@ def get_price(name):
 
 
 def get_image_from_url(url):
-    print('get image from ', url)
     session = requests.session()
     request = session.get(url=url, headers=headers)
     if request.status_code == 200:
         soup = bs(request.content, 'lxml')
         try:
-            print('good')
             soup = str(soup)
             index = soup.find("accessibility_caption")
-            print(index)
             soup = soup[index-1000:index]
             end = soup.rfind('\",\"')
             start = soup.rfind('{') + 8
             link = soup[start:end]
             link = link.replace('\\u0026', '&')
             img = requests.get(link)
-        except:
-            print('except from get_image_from_url')
+        except Exception as e:
+            print(e)
     else:
         print(request.status_code)
         print('ERROR')
@@ -260,7 +257,6 @@ def get_image_from_url(url):
 @bot.message_handler(content_types=["text"])
 @bot.edited_message_handler(content_types=["text"])
 def echo_i_see(message: Message):
-    print(message.text)
     if message.text.startswith('https://www.instagram.com/'):
         url = message.text
         image = get_image_from_url(url)
