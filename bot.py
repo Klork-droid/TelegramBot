@@ -260,7 +260,9 @@ def get_image_from_url(url):
             start = soup.rfind('{') + 8
             link = soup[start:end]
             link = link.replace('\\u0026', '&')
+            print(link)
             img = requests.get(link)
+            print('img')
         except Exception as e:
             print(e)
     else:
@@ -276,7 +278,10 @@ def echo_i_see(message: Message):
     if message.text.startswith('https://www.instagram.com/'):
         url = message.text
         image = get_image_from_url(url)
-        bot.send_photo(chat_id=message.chat.id, photo=image)
+        if image:
+            bot.send_photo(chat_id=message.chat.id, photo=image)
+        else:
+            bot.send_message(chat_id=message.chat.id, text='Photo not found')
     else:
         reply = str("Use '/start' please")
         add_message(user_id=message.from_user.id, user_name=message.from_user.username, text=message.text)
