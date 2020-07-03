@@ -251,8 +251,11 @@ def get_image_from_url(url):
     img = None
     session = requests.session()
     request = session.get(url=url, headers=headers)
+    print(f'url: {url}')
+    print(f'request.status_code: {request.status_code}')
     if request.status_code == 200:
         soup = bs(request.content, 'lxml')
+        print(f'soup: {soup}')
         try:
             soup = str(soup)
             index = soup.find("accessibility_caption")
@@ -261,9 +264,9 @@ def get_image_from_url(url):
             start = soup.rfind('{') + 8
             link = soup[start:end]
             link = link.replace('\\u0026', '&')
-            print(link)
+            print(f'link: {link}')
             img = requests.get(link)
-            print('img')
+            print('img get')
         except Exception as e:
             print(e)
     else:
