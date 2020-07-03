@@ -258,8 +258,6 @@ def checkIP():
     soup = BeautifulSoup(ip, 'html.parser')
     print(soup.find('body').text)
 
-checkIP()
-
 
 def get_proxy()
     subprocess.Popen("proxy_py/main.py", shell=True)
@@ -283,7 +281,8 @@ def get_proxy()
 
 
 def get_image_from_url(url):
-    print(checkIP())
+    print(f'my ip: {checkIP()}')
+    print(f'proxy is: {get_proxy()}')
     img = None
     session = requests.session()
     request = session.get(url=url, headers=headers)
