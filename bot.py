@@ -269,8 +269,10 @@ def get_image_from_url(url):
     else:
         print(request.status_code)
         print('ERROR')
-
-    return img.content
+    if img:
+        return img.content
+    else:
+        return None
 
 
 @bot.message_handler(content_types=["text"])
