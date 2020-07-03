@@ -9,6 +9,9 @@ from db import all_users
 from datetime import datetime
 import time
 from bs4 import BeautifulSoup as bs
+import subprocess
+import json
+
 
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
 headers = {
@@ -250,7 +253,37 @@ def get_price(name):
     return reply
 
 
+def checkIP():
+    ip = requests.get('http://checkip.dyndns.org').content
+    soup = BeautifulSoup(ip, 'html.parser')
+    print(soup.find('body').text)
+
+checkIP()
+
+
+def get_proxy()
+    subprocess.Popen("proxy_py/main.py", shell=True)
+    result = []
+    json_data = {
+        "model": "proxy",
+        "method": "get",
+    }
+    url = "http://127.0.0.1:55555/api/v1/"
+
+    response = requests.post(url, json=json_data)
+    if response.status_code == 200:
+        response = json.loads(response.text)
+        for proxy in response["data"]:
+            result.append(proxy["address"])
+    else:
+        # check error here
+        pass
+
+    return result
+
+
 def get_image_from_url(url):
+    print(checkIP())
     img = None
     session = requests.session()
     request = session.get(url=url, headers=headers)
