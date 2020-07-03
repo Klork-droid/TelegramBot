@@ -255,7 +255,7 @@ def get_price(name):
 
 def checkIP():
     ip = requests.get('http://checkip.dyndns.org').content
-    soup = BeautifulSoup(ip, 'html.parser')
+    soup = bs(ip, 'html.parser')
     print(soup.find('body').text)
 
 
