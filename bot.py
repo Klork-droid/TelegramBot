@@ -248,6 +248,7 @@ def get_price(name):
 
 
 def get_image_from_url(url):
+    img = None
     session = requests.session()
     request = session.get(url=url, headers=headers)
     if request.status_code == 200:
