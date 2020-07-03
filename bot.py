@@ -259,7 +259,7 @@ def checkIP():
     print(soup.find('body').text)
 
 
-def get_proxy()
+def get_proxy():
     subprocess.Popen("proxy_py/main.py", shell=True)
     result = []
     json_data = {
