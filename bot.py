@@ -269,6 +269,7 @@ def get_image_from_url(url):
     else:
         print(request.status_code)
         print('ERROR')
+    print(type(img))
     if img:
         return img.content
     else:
