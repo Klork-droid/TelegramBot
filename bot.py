@@ -9,10 +9,14 @@ from db import all_users
 from datetime import datetime
 import time
 from bs4 import BeautifulSoup as bs
+from random import choice
 
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.122 Safari/537.36"
 headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
+    'referer': 'https://www.instagram.com/',
     'user-agent': user_agent}
 
 token = "1010570699:AAG8w1NHWTuEpgA0JZrRD_nO015pym37iXk"
@@ -247,31 +251,56 @@ def get_price(name):
     return reply
 
 
-def get_image_from_url(url):
-    img = None
-    session = requests.session()
-    request = session.get(url=url, headers=headers)
-    print(f'url: {url}')
-    print(f'request.status_code: {request.status_code}')
-    if request.status_code == 200:
-        soup = bs(request.content, 'lxml')
-        print(f'soup: {soup}')
+def get_proxy():
+    url = 'https://www.sslproxies.org/'
+    response = requests.get(url)
+    soup = bs(response.content, 'lxml')
+    return {'https': choice(
+        list(map(lambda x: x[0] + ':' + x[1],
+                 list(zip(map(lambda x: x.text, soup.findAll('td')[::8]),
+                          map(lambda x: x.text, soup.findAll('td')[1::8]))))))}
+
+
+def get_soup(url):
+    while True:
         try:
-            soup = str(soup)
-            index = soup.find("accessibility_caption")
-            soup = soup[index - 1000:index]
-            end = soup.rfind('\",\"')
-            start = soup.rfind('{') + 8
-            link = soup[start:end]
-            link = link.replace('\\u0026', '&')
-            print(f'link: {link}')
-            img = requests.get(link)
-            print('img get')
+            proxy = get_proxy()
+            print(f'Use: {proxy}')
+            html = requests.get(url, headers=headers, proxies=proxy, timeout=10).content
+            soup = bs(html, 'lxml')
+            break
         except Exception as e:
             print(e)
-    else:
-        print(request.status_code)
-        print('ERROR')
+            pass
+    return soup
+
+
+def checkIP():
+    soup = get_soup('https://yandex.ru/internet/')
+    div = soup.find('li', class_='parameter-wrapper general-info__parameter')
+    ip = div.find("div", class_='').text
+    print(f'IP: {ip}')
+    return ip
+
+
+
+def get_image_from_url(url):
+    img = None
+    print(f'url: {url}')
+    soup = get_soup(url)
+    try:
+        soup = str(soup)
+        index = soup.find("accessibility_caption")
+        soup = soup[index - 1000:index]
+        end = soup.rfind('\",\"')
+        start = soup.rfind('{') + 8
+        link = soup[start:end]
+        link = link.replace('\\u0026', '&')
+        print(f'link: {link}')
+        img = requests.get(link)
+        print('img get')
+    except Exception as e:
+        print(e)
     print(type(img))
     if img:
         return img.content
