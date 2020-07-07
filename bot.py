@@ -266,7 +266,8 @@ def get_soup(url):
         try:
             proxy = get_proxy()
             print(f'Use: {proxy}')
-            html = requests.get(url, headers=headers, proxies=proxy, timeout=10).content
+            session = requests.Session()
+            html = session.get(url, headers=headers, proxies=proxy, timeout=10).content
             soup = bs(html, 'lxml')
             break
         except Exception as e:
@@ -283,45 +284,12 @@ def checkIP():
     return ip
 
 
-
-def get_image_from_url(url):
-    img = None
-    print(f'url: {url}')
-    soup = get_soup(url)
-    try:
-        soup = str(soup)
-        index = soup.find("accessibility_caption")
-        soup = soup[index - 1000:index]
-        end = soup.rfind('\",\"')
-        start = soup.rfind('{') + 8
-        link = soup[start:end]
-        link = link.replace('\\u0026', '&')
-        print(f'link: {link}')
-        img = requests.get(link)
-        print('img get')
-    except Exception as e:
-        print(e)
-    print(type(img))
-    if img:
-        return img.content
-    else:
-        return None
-
-
 @bot.message_handler(content_types=["text"])
 @bot.edited_message_handler(content_types=["text"])
 def echo_i_see(message: Message):
-    if message.text.startswith('https://www.instagram.com/'):
-        url = message.text
-        image = get_image_from_url(url)
-        if image:
-            bot.send_photo(chat_id=message.chat.id, photo=image)
-        else:
-            bot.send_message(chat_id=message.chat.id, text='Photo not found')
-    else:
-        reply = str("Use '/start' please")
-        add_message(user_id=message.from_user.id, user_name=message.from_user.username, text=message.text)
-        bot.reply_to(message, reply)
+    reply = str("Use '/start' please")
+    add_message(user_id=message.from_user.id, user_name=message.from_user.username, text=message.text)
+    bot.reply_to(message, reply)
 
 
 @bot.message_handler(content_types=['sticker'])
